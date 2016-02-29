@@ -29,7 +29,6 @@ import java.io.IOException;
 /**
  * Dummy SMTP server for testing purposes.
  *
- * @todo constructor allowing user to pass preinitialized ServerSocket
  */
 public class SimpleSmtpServer implements Runnable {
   /**
