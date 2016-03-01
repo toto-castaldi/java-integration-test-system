@@ -16,25 +16,19 @@
  */
 package com.github.totoCastaldi.integration.mail;
 
+import com.google.common.collect.Lists;
+
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.IOException;
 
-/**
- * Dummy SMTP server for testing purposes.
- *
- */
-public class SimpleSmtpServer implements Runnable {
-  /**
-   * Stores all of the email received since this instance started up.
-   */
-  private List receivedMail;
+public class SmtpServer implements Runnable {
+
+  private List<SmtpMessage> receivedMail;
 
   /**
    * Default SMTP port is 25.
@@ -65,7 +59,7 @@ public class SimpleSmtpServer implements Runnable {
    * Constructor.
    * @param port port number
    */
-  public SimpleSmtpServer(int port) {
+  public SmtpServer(int port) {
     receivedMail = new ArrayList();
     this.port = port;
   }
@@ -110,7 +104,7 @@ public class SimpleSmtpServer implements Runnable {
            * For higher concurrency, we could just change handle to return void and update the list inside the method
            * to limit the duration that we hold the lock.
            */
-          List msgs = handleTransaction(out, input);
+          List<SmtpMessage> msgs = handleTransaction(out, input);
           receivedMail.addAll(msgs);
         }
         socket.close();
@@ -152,6 +146,9 @@ public class SimpleSmtpServer implements Runnable {
     }
   }
 
+  public synchronized void clearEmails() {
+    this.receivedMail.clear();
+  }
   /**
    * Handle an SMTP transaction, i.e. all activity between initial connect and QUIT command.
    *
@@ -160,7 +157,7 @@ public class SimpleSmtpServer implements Runnable {
    * @return List of SmtpMessage
    * @throws IOException
    */
-  private List handleTransaction(PrintWriter out, BufferedReader input) throws IOException {
+  private List<SmtpMessage> handleTransaction(PrintWriter out, BufferedReader input) throws IOException {
     // Initialize the state machine
     SmtpState smtpState = SmtpState.CONNECT;
     SmtpRequest smtpRequest = new SmtpRequest(SmtpActionType.CONNECT, "", smtpState);
@@ -172,7 +169,7 @@ public class SimpleSmtpServer implements Runnable {
     sendResponse(out, smtpResponse);
     smtpState = smtpResponse.getNextState();
 
-    List msgList = new ArrayList();
+    List<SmtpMessage> msgList = Lists.newArrayList();
     SmtpMessage msg = new SmtpMessage();
 
     while (smtpState != SmtpState.CONNECT) {
@@ -223,8 +220,8 @@ public class SimpleSmtpServer implements Runnable {
    * Get email received by this instance since start up.
    * @return List of String
    */
-  public synchronized Iterator getReceivedEmail() {
-    return receivedMail.iterator();
+  public synchronized Collection<SmtpMessage> getReceivedEmail() {
+    return Collections.unmodifiableList(receivedMail);
   }
 
   /**
@@ -236,20 +233,20 @@ public class SimpleSmtpServer implements Runnable {
   }
 
   /**
-   * Creates an instance of SimpleSmtpServer and starts it. Will listen on the default port.
+   * Creates an instance of SmtpServer and starts it. Will listen on the default port.
    * @return a reference to the SMTP server
    */
-  public static SimpleSmtpServer start() {
+  public static SmtpServer start() {
     return start(DEFAULT_SMTP_PORT);
   }
 
   /**
-   * Creates an instance of SimpleSmtpServer and starts it.
+   * Creates an instance of SmtpServer and starts it.
    * @param port port number the server should listen to
    * @return a reference to the SMTP server
    */
-  public static SimpleSmtpServer start(int port) {
-    SimpleSmtpServer server = new SimpleSmtpServer(port);
+  public static SmtpServer start(int port) {
+    SmtpServer server = new SmtpServer(port);
     Thread t = new Thread(server);
     t.start();
     
