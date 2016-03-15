@@ -49,8 +49,10 @@ public class HttpResource {
         con.setDoInput(true);
         con.setRequestMethod(method.name());
 
-        for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
-            con.setRequestProperty(entry.getKey(), entry.getValue());
+        if (requestHeaders != null) {
+            for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
+                con.setRequestProperty(entry.getKey(), entry.getValue());
+            }
         }
 
 
@@ -69,7 +71,9 @@ public class HttpResource {
         try {
             responseCode = con.getResponseCode();
         } catch (IOException e) {
-            if (!(e instanceof FileNotFoundException)) {
+            if (StringUtils.contains(e.getMessage(), "server returned HTTP response code: 500")) {
+                responseCode = 500;
+            } else if (!(e instanceof FileNotFoundException)) {
                 log.warn(StringUtils.EMPTY, e);
             }
         }

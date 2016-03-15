@@ -4,10 +4,10 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Created by toto on 03/03/16.
+ * Created by toto on 15/03/16.
  */
 @Data
-@RequiredArgsConstructor (staticName = "of")
+@RequiredArgsConstructor(staticName = "of")
 public class SimpleSmtpMessage {
 
     private final String body;
